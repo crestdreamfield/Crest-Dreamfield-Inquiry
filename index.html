@@ -92,24 +92,104 @@ const form = document.getElementById('inquiryForm');
 const submitBtn = document.getElementById('submitBtn');
 const message = document.getElementById('message');
 
-document.querySelectorAll('.option input').forEach(input => input.addEventListener('change', () => {
-  if (input.type === 'radio') input.closest('.option-grid').querySelectorAll('.option').forEach(option => option.classList.remove('selected'));
-  if (input.checked) input.closest('.option').classList.add('selected');
-}));
+// Highlight selected radio buttons and checkboxes.
+document.querySelectorAll('.option input').forEach(input => {
+  input.addEventListener('change', () => {
+    if (input.type === 'radio') {
+      input.closest('.option-grid')
+        .querySelectorAll('.option')
+        .forEach(option => option.classList.remove('selected'));
+    }
+
+    if (input.checked) {
+      input.closest('.option').classList.add('selected');
+    }
+  });
+});
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
-  message.className = ''; message.style.display = 'none'; message.textContent = '';
-  submitBtn.disabled = true; submitBtn.textContent = 'Submitting Inquiry...';
-  const selected = name => [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(input => input.value).join(', ');
-  const data = { formType:'inquiry', parentName:parentName.value.trim(), relationship:relationship.value.trim(), email:email.value.trim(), mobile:mobile.value.trim(), contactMethod:selected('contactMethod'), childName:childName.value.trim(), age:age.value, dob:dob.value, gender:selected('gender'), schoolGrade:schoolGrade.value.trim(), interestedIn:selected('interestedIn'), otherInterest:document.getElementById('otherInterest').value.trim(), preferredSchedule:preferredSchedule.value.trim(), preferredTime:preferredTime.value.trim(), heardAbout:selected('heardAbout'), otherReferral:document.getElementById('otherReferral').value.trim(), goals:goals.value.trim(), learningNeeds:learningNeeds.value.trim(), message:messageText.value.trim(), emergencyName:emergencyName.value.trim(), emergencyRelationship:emergencyRelationship.value.trim(), emergencyMobile:emergencyMobile.value.trim(), consentAccepted:consent.checked, signature:signature.value.trim(), formDate:formDate.value };
+
+  message.className = '';
+  message.style.display = 'none';
+  message.textContent = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting Inquiry...';
+
+  const value = id => {
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : '';
+  };
+
+  const checkedValues = name => {
+    return [...document.querySelectorAll(`input[name="${name}"]:checked`)]
+      .map(input => input.value)
+      .join(', ');
+  };
+
+  const data = {
+    formType: 'inquiry',
+    parentName: value('parentName'),
+    relationship: value('relationship'),
+    email: value('email'),
+    mobile: value('mobile'),
+    contactMethod: checkedValues('contactMethod'),
+    childName: value('childName'),
+    age: value('age'),
+    dob: value('dob'),
+    gender: checkedValues('gender'),
+    schoolGrade: value('schoolGrade'),
+    interestedIn: checkedValues('interestedIn'),
+    otherInterest: value('otherInterest'),
+    preferredSchedule: value('preferredSchedule'),
+    preferredTime: value('preferredTime'),
+    heardAbout: checkedValues('heardAbout'),
+    otherReferral: value('otherReferral'),
+    goals: value('goals'),
+    learningNeeds: value('learningNeeds'),
+    message: value('messageText'),
+    emergencyName: value('emergencyName'),
+    emergencyRelationship: value('emergencyRelationship'),
+    emergencyMobile: value('emergencyMobile'),
+    consentAccepted: document.getElementById('consent').checked,
+    signature: value('signature'),
+    formDate: value('formDate')
+  };
+
   try {
-    await fetch(scriptURL, { method:'POST', mode:'no-cors', body:JSON.stringify(data) });
-    message.className = 'success'; message.innerHTML = '<strong>Your inquiry has been received.</strong><p style="margin-top:8px;">Crest Dreamfield Academy will contact you regarding your inquiry and available programs.</p>';
-    form.reset(); document.querySelectorAll('.option').forEach(option => option.classList.remove('selected'));
-    message.scrollIntoView({behavior:'smooth',block:'center'});
+    // no-cors is required when this form is hosted separately from Apps Script.
+    await fetch(scriptURL, {
+      method: 'POST',
+      mode: 'no-cors',
+      body: JSON.stringify(data)
+    });
+
+    message.className = 'success';
+    message.innerHTML = `
+      <strong>Your inquiry has been received.</strong>
+      <p style="margin-top:8px;">
+        Crest Dreamfield Academy will contact you regarding your inquiry and available programs.
+      </p>
+    `;
+
+    form.reset();
+    document.querySelectorAll('.option').forEach(option => {
+      option.classList.remove('selected');
+    });
+    message.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
   } catch (error) {
-    message.className = 'error'; message.innerHTML = '<strong>We could not submit your inquiry.</strong><p style="margin-top:8px;">Please check your connection and try again.</p>';
-  } finally { submitBtn.disabled = false; submitBtn.textContent = 'Submit Inquiry'; }
+    console.error('Google Sheets submission error:', error);
+    message.className = 'error';
+    message.innerHTML = `
+      <strong>We could not submit your inquiry.</strong>
+      <p style="margin-top:8px;">
+        Please check your connection and try again.
+      </p>
+    `;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Inquiry';
+  }
 });
 </script></body></html>
